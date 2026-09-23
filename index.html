@@ -26,6 +26,12 @@
       #painel { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 0.6em; background: rgba(7, 6, 26, 0.92); }
       #painel h1 { margin: 0; font-size: 2.6em; }
       #painel p { margin: 0; font-size: 1.3em; }
+      #apelido { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 0.8em; background: rgba(7, 6, 26, 0.95); }
+      #apelido h2 { margin: 0; font-size: 2em; }
+      #letras { display: flex; gap: 0.3em; justify-content: center; font: 700 2.4em ui-monospace, monospace; }
+      #letras span { width: 1.1em; border-bottom: 0.08em solid #5a5880; }
+      #letras span.atual { color: #fff078; border-color: #fff078; }
+      #apelido small { opacity: 0.75; font-size: 1em; }
       .escondido { display: none !important; }
     </style>
   </head>
@@ -37,6 +43,12 @@
       <div id="tiro"></div>
       <div id="nave"></div>
       <p id="mensagem"></p>
+      <section id="apelido" class="escondido">
+        <h2>Fim de jogo! <span id="pontos-finais"></span> pontos</h2>
+        <p>Digite seu apelido para o ranking</p>
+        <div id="letras"></div>
+        <small>↑ ↓ trocam a letra · → próxima · ← apaga · ou digite · Enter confirma</small>
+      </section>
       <section id="painel">
         <h1>Quiz Invaders</h1>
         <p>← → movem a nave · Espaço atira na resposta certa</p>

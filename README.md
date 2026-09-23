@@ -9,10 +9,12 @@ Jogo de exemplo do **Recreio Arcade**, mantido pelo G1 (Plataforma de Gestão). 
 
 Mova a nave com **← →** até a resposta certa e atire com **Espaço** (ou Enter). São 10 questões por partida, com 15 segundos cada. Acertar vale 100 pontos, mais 10 por segundo restante.
 
-Ao terminar, o jogo envia ao fliperama a mensagem `PLACAR` da especificação, via `window.parent.postMessage`:
+No fim da partida, o jogo pede o **apelido** do jogador para o ranking (A-Z e 0-9, até 9 caracteres). Dá para digitar no teclado ou usar só o joystick: **↑ ↓** trocam a letra, **→** vai para a próxima, **←** apaga, **Enter** confirma.
+
+Com o apelido confirmado, o jogo envia ao fliperama a mensagem `PLACAR`, via `window.parent.postMessage`. O fliperama repassa o placar para a API (e pede a nota do jogo ao jogador):
 
 ```json
-{ "tipo": "PLACAR", "jogo": "jogo-exemplo", "versao": "1.0.0", "pontos": 1450, "duracao_s": 95, "acertos": 8, "erros": 2, "tema": "Matemática" }
+{ "tipo": "PLACAR", "jogo": "jogo-exemplo", "versao": "1.1.0", "jogador": "ANA", "pontos": 1450, "duracao_s": 95, "acertos": 8, "erros": 2, "tema": "Matemática" }
 ```
 
 Para rodar localmente, sirva a pasta por HTTP, porque o jogo carrega `questoes.json` com `fetch`:

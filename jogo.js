@@ -1,10 +1,14 @@
 // Quiz Invaders (exemplo): 10 questões por partida, 15 s cada.
-// Ao terminar, envia a mensagem PLACAR da especificação ao fliperama.
+// No fim, pede o apelido do jogador e envia a mensagem PLACAR ao fliperama.
 
 const JOGO = 'jogo-exemplo'
-const VERSAO = '1.0.0'
+const VERSAO = '1.1.0'
 const QUESTOES_POR_PARTIDA = 10
 const SEGUNDOS_POR_QUESTAO = 15
+
+// Regra do apelido no Recreio Arcade: A-Z e 0-9, até 9 caracteres.
+const CARACTERES = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+const TAMANHO_APELIDO = 9
 
 const $ = (id) => document.getElementById(id)
 const tela = $('tela')
@@ -14,6 +18,8 @@ let partida = null
 let posicao = 0
 let bloqueado = true
 let relogio = null
+// Enquanto não for null, a tela de apelido está aberta.
+let apelido = null
 
 async function carregar() {
   try {
@@ -121,26 +127,89 @@ function responder(escolha) {
 }
 
 function terminar() {
+  // A duração conta só as questões, não o tempo digitando o apelido.
+  partida.duracao_s = Math.round((Date.now() - partida.inicio) / 1000)
+  apelido = { letras: [''], cursor: 0 }
+  $('pontos-finais').textContent = partida.pontos
+  $('apelido').classList.remove('escondido')
+  desenharApelido()
+}
+
+function desenharApelido() {
+  $('letras').innerHTML = Array.from({ length: TAMANHO_APELIDO }, (_, i) => {
+    const letra = apelido.letras[i] ?? ''
+    return `<span class="${i === apelido.cursor ? 'atual' : ''}">${letra || '&nbsp;'}</span>`
+  }).join('')
+}
+
+// `letras` guarda uma posição por caractere; '' é a posição vazia onde está o cursor.
+function editarApelido(evento) {
+  const { letras } = apelido
+  const tecla = evento.key.length === 1 ? evento.key.toUpperCase() : evento.key
+  const atual = letras[apelido.cursor]
+
+  if (tecla === 'Enter') {
+    const jogador = letras.join('')
+    if (jogador) enviarPlacar(jogador)
+    return evento.preventDefault()
+  }
+
+  if (tecla === 'ArrowUp' || tecla === 'ArrowDown') {
+    // Pelo joystick: gira a letra da posição atual (começa em A).
+    const passo = tecla === 'ArrowUp' ? 1 : -1
+    const indice = atual ? CARACTERES.indexOf(atual) : passo === 1 ? -1 : 0
+    letras[apelido.cursor] = CARACTERES[(indice + passo + CARACTERES.length) % CARACTERES.length]
+  } else if (tecla === 'ArrowRight') {
+    if (atual && letras.length < TAMANHO_APELIDO) avancar()
+  } else if (tecla === 'ArrowLeft' || tecla === 'Backspace') {
+    if (atual) letras[apelido.cursor] = ''
+    else if (letras.length > 1) {
+      letras.pop()
+      apelido.cursor -= 1
+      letras[apelido.cursor] = ''
+    }
+  } else if (CARACTERES.includes(tecla)) {
+    // Com as 9 posições cheias, ignora o que for digitado a mais.
+    if (atual) return evento.preventDefault()
+    letras[apelido.cursor] = tecla
+    if (letras.length < TAMANHO_APELIDO) avancar()
+  } else {
+    return
+  }
+  evento.preventDefault()
+  desenharApelido()
+}
+
+function avancar() {
+  apelido.letras.push('')
+  apelido.cursor = apelido.letras.length - 1
+}
+
+function enviarPlacar(jogador) {
   const placar = {
     tipo: 'PLACAR',
     jogo: JOGO,
     versao: VERSAO,
+    jogador,
     pontos: partida.pontos,
-    duracao_s: Math.round((Date.now() - partida.inicio) / 1000),
+    duracao_s: partida.duracao_s,
     acertos: partida.acertos,
     erros: partida.erros,
     tema: banco.tema,
   }
-  // O fliperama roda o jogo num iframe e recebe o placar por postMessage.
+  // O fliperama roda o jogo num iframe, recebe o placar por postMessage e o envia à API.
   if (window.parent !== window) window.parent.postMessage(placar, '*')
   console.log('PLACAR', placar)
 
-  $('resultado').textContent = `Fim! ${placar.pontos} pontos · ${placar.acertos} acertos · ${placar.erros} erros`
+  $('apelido').classList.add('escondido')
+  $('resultado').textContent = `${jogador}: ${placar.pontos} pontos · ${placar.acertos} acertos · ${placar.erros} erros`
   $('painel').classList.remove('escondido')
+  apelido = null
   partida = null
 }
 
 document.addEventListener('keydown', (evento) => {
+  if (apelido) return editarApelido(evento)
   if (!partida) {
     if (evento.key === 'Enter') iniciar()
     return
